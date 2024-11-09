@@ -1,31 +1,32 @@
+---
 - name: Deploy Docker container on remote server
   hosts: remote-server
   become: true  # Use sudo if necessary
 
-tasks:
-    - name: Pull Docker image from local registry
+  tasks:
+    - name: Ensure Docker image is available on the remote server
       docker_image:
-        name: "localhost:5000/{{ image }}"
-        source: pull
-
+        name: "{{ image }}"
+        source: pull  # or "build" if you want to build on the remote server, but since you're using a local image, this isn't needed
+        pull: no  # Since it's a locally built image, do not pull it from a remote registry
 
     - name: Stop existing Docker container
       docker_container:
-        name: my-app
+        name: my-container
         state: stopped
         ignore_errors: yes
 
     - name: Remove existing Docker container
       docker_container:
-        name: my-app
+        name: my-container
         state: absent
         ignore_errors: yes
 
     - name: Run Docker container
       docker_container:
-        name: my-app
+        name: my-container
         image: "{{ image }}"
         state: started
         restart_policy: always
         ports:
-          - "80:80"  # Adjust ports as needed
+          - "80:80"  # Example port forwarding
