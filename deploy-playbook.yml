@@ -7,8 +7,8 @@
     - name: Ensure Docker image is available on the remote server
       docker_image:
         name: "{{ image }}"
-        source: pull  # or "build" if you want to build on the remote server, but since you're using a local image, this isn't needed
-        pull: no  # Since it's a locally built image, do not pull it from a remote registry
+        source: pull  # This will pull the image if it's not already available
+        state: present  # Ensure the image is present on the host
 
     - name: Stop existing Docker container
       docker_container:
