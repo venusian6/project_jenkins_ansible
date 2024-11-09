@@ -2,11 +2,16 @@
   hosts: remote-server
   become: true  # Use sudo if necessary
 
-  tasks:
-    - name: Pull Docker image from local registry
+ tasks:
+    - name: Ensure Docker image is available (Load local image)
       docker_image:
         name: "{{ image }}"
-        source: pull
+        source: build
+        path: /path/to/your/docker/context  # Local path where Dockerfile and context are located
+        build:
+          rm: yes
+          pull: no  # Don't pull the image, just build from the local context
+
 
     - name: Stop existing Docker container
       docker_container:
