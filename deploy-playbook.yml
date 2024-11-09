@@ -1,0 +1,30 @@
+- name: Deploy Docker container on remote server
+  hosts: remote-server
+  become: true  # Use sudo if necessary
+
+  tasks:
+    - name: Pull Docker image from local registry
+      docker_image:
+        name: "{{ image }}"
+        source: pull
+
+    - name: Stop existing Docker container
+      docker_container:
+        name: my-app
+        state: stopped
+        ignore_errors: yes
+
+    - name: Remove existing Docker container
+      docker_container:
+        name: my-app
+        state: absent
+        ignore_errors: yes
+
+    - name: Run Docker container
+      docker_container:
+        name: my-app
+        image: "{{ image }}"
+        state: started
+        restart_policy: always
+        ports:
+          - "80:80"  # Adjust ports as needed
