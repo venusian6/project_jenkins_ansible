@@ -1,42 +1,16 @@
----
-- name: Deploy Docker image to remote server
-  hosts: 192.168.1.93
+- name: Deploy Docker container on remote server
+  hosts: remote-server
   become: true
-  vars:
-    local_image_path: "/tmp/my-image.tar"  # Local path to save the Docker image tarball
-    remote_image_path: "/tmp/my-image.tar" # Remote path to store the image file
 
   tasks:
-    - name: Save Docker image on Jenkins server
-      delegate_to: localhost
-      command: "docker save -o {{ local_image_path }} {{ image }}"
-      args:
-        creates: "{{ local_image_path }}"  # Only creates if it doesn't already exist
-      tags: save-image
+    - name: Load Docker image from tar file
+      command: docker load -i /path/to/save/my-image.tar
 
-    - name: Copy Docker image to remote server
-      ansible.builtin.copy:
-        src: "{{ local_image_path }}"
-        dest: "{{ remote_image_path }}"
-      tags: copy-image
-
-    - name: Load Docker image on remote server
-      command: "docker load -i {{ remote_image_path }}"
-      tags: load-image
-
-    - name: Stop existing Docker container
-      docker_container:
-        name: my-container
-        state: stopped
-      ignore_errors: yes
-      tags: stop-container
-
-    - name: Remove existing Docker container
+    - name: Stop and remove existing Docker container
       docker_container:
         name: my-container
         state: absent
-      ignore_errors: yes
-      tags: remove-container
+        ignore_errors: yes
 
     - name: Run Docker container
       docker_container:
@@ -45,5 +19,4 @@
         state: started
         restart_policy: always
         ports:
-          - "80:80"  # Update port mapping as needed
-      tags: run-container
+          - "80:80"
