@@ -1,10 +1,10 @@
 - name: Deploy Docker container on remote server
-  hosts: remote_server
+  hosts: 192.168.1.93
   become: true
 
   tasks:
     - name: Load Docker image from tar file
-      command: docker load -i /root/charge/{{ image }}.tar
+      command: docker load -i /home/vivek/{{ image }}.tar
       register: load_result
 
     - name: Check if image was loaded successfully
