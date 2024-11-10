@@ -13,13 +13,13 @@
       when: load_result.rc != 0
 
     - name: Stop and remove existing container (if exists)
-      docker_container:
+      community.docker.docker_container:
         name: my-container
         state: absent
         ignore_errors: yes
 
-    - name: Run Docker container
-      docker_container:
+    - name: Stop and remove existing container (if exists)
+      community.docker.docker_container:
         name: my-container
         image: "{{ image }}"
         state: started
