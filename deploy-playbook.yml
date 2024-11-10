@@ -1,13 +1,18 @@
----
 - name: Deploy Docker container on remote server
   hosts: 192.168.1.93
   become: true
 
   tasks:
     - name: Load Docker image from tar file
-      command: docker load -i /root/{{ image }}.tar
+      command: docker load -i /root/charge/{{ image }}.tar
+      register: load_result
 
-    - name: Stop and remove existing Docker container (if exists)
+    - name: Check if image was loaded successfully
+      fail:
+        msg: "Failed to load Docker image: {{ load_result.stderr }}"
+      when: load_result.rc != 0
+
+    - name: Stop and remove existing container (if exists)
       docker_container:
         name: my-container
         state: absent
@@ -20,4 +25,5 @@
         state: started
         restart_policy: always
         ports:
-          - "80:80"  # Example port forwarding
+          - container_port: 80
+            host_port: 80
