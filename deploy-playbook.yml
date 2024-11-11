@@ -1,29 +1,51 @@
-- name: Deploy Docker container on remote server
-  hosts: remote_server
-  become: true
+pipeline {
+    agent any
 
-  tasks:
-    - name: Load Docker image from tar file
-      command: docker load -i /home/vivek/{{ image }}.tar
-      register: load_result
+    environment {
+        DOCKER_REGISTRY = 'localhost:5000'  // or the registry you are using
+        IMAGE_NAME = 'my-img'        // Your image name
+        IMAGE_TAG = "${BUILD_NUMBER}"       // Tagging with build number
+        FULL_IMAGE_NAME = "${DOCKER_REGISTRY}/${IMAGE_NAME}:${IMAGE_TAG}"
+        GIT_REPO_URL = "https://github.com/venusian6/project_jenkins_ansible.git"  // Your repo URL
+        BRANCH = "main"                    // Git branch to checkout
+        TAR_FILE_NAME = "${IMAGE_NAME}-${IMAGE_TAG}.tar"  // Tarball filename
+    }
 
-    - name: Check if image was loaded successfully
-      fail:
-        msg: "Failed to load Docker image: {{ load_result.stderr }}"
-      when: load_result.rc != 0
+    stages {
+        stage('Clone Repository') {
+            steps {
+                git branch: "${BRANCH}", url: "${GIT_REPO_URL}"
+            }
+        }
 
-    - name: Stop and remove existing container (if exists)
-      community.docker.docker_container:
-        name: my-container
-        state: absent
-        ignore_errors: yes
+        stage('Build Docker Image') {
+            steps {
+                script {
+                    echo "Building Docker image: ${env.FULL_IMAGE_NAME}"
+                    sh "docker build -t ${env.FULL_IMAGE_NAME} ."
+                }
+            }
+        }
 
-    - name: Stop and remove existing container (if exists)
-      community.docker.docker_container:
-        name: my-container
-        image: "{{ image }}"
-        state: started
-        restart_policy: always
-        ports:
-          - container_port: 80
-            host_port: 80
+        stage('Save Docker Image') {
+            steps {
+                script {
+                    echo "Saving Docker image to tar file: ${env.TAR_FILE_NAME}"
+                    sh "docker save -o ${env.TAR_FILE_NAME} ${env.FULL_IMAGE_NAME}"
+
+                    echo "Copying Docker image tar file to remote server"
+                    sh "scp -v ${env.TAR_FILE_NAME} vivek@192.168.1.93:/home/vivek/${env.TAR_FILE_NAME}"
+                }
+            }
+        }
+
+        stage('Deploy to Remote Server') {
+            steps {
+                script {
+                    echo "Running Ansible playbook to deploy Docker container"
+                    sh "ansible-playbook -vvv -i /var/lib/jenkins/workspace/working2024/inventory deploy-playbook.yml --extra-vars \"image=${env.FULL_IMAGE_NAME}\""
+                }
+            }
+        }
+    }
+}
