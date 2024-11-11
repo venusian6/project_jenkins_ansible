@@ -21,7 +21,7 @@
     - name: Stop and remove existing container (if exists)
       community.docker.docker_container:
         name: my-container
-        image: "localhost:5000/my-img:17"
+        image: "{{ image }}"
         state: started
         restart_policy: always
         ports:
