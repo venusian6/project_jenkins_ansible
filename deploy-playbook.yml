@@ -4,7 +4,7 @@
 
   tasks:
     - name: Load Docker image from tar file
-      command: docker load -i /home/vivek/{{ image }}.tar
+      command: docker load -i /home/vivek/{{ image }}
       register: load_result
 
     - name: Check if image was loaded successfully
